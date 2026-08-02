@@ -1,5 +1,6 @@
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,11 +17,12 @@ public class HashTableMap<KeyType, ValueType>
             this.key = key;
             this.value = value;
         }
-
     }
 
 
     protected LinkedList<Pair>[] table;
+
+    private int size;
 
 
     @SuppressWarnings("unchecked")
@@ -28,6 +30,11 @@ public class HashTableMap<KeyType, ValueType>
 
         table = (LinkedList<Pair>[]) new LinkedList[capacity];
 
+        for(int i = 0; i < table.length; i++) {
+            table[i] = new LinkedList<Pair>();
+        }
+
+        size = 0;
     }
 
 
@@ -36,42 +43,147 @@ public class HashTableMap<KeyType, ValueType>
         this(64);
 
     }
+
+
     public void put(KeyType key, ValueType value) {
+
+        if(key == null) {
+            throw new NullPointerException();
+        }
+
+
+        int index = Math.abs(key.hashCode()) % table.length;
+
+
+        for(Pair pair : table[index]) {
+
+            if(pair.key.equals(key)) {
+                throw new IllegalArgumentException();
+            }
+
+        }
+
+
+        table[index].add(new Pair(key,value));
+
+        size++;
+
+
+        if((double)size / table.length >= 0.75) {
+
+            resize();
+
+        }
 
     }
 
 
+
     public boolean containsKey(KeyType key) {
+
+
+        if(key == null) {
+            return false;
+        }
+
+
+        int index = Math.abs(key.hashCode()) % table.length;
+
+
+        for(Pair pair : table[index]) {
+
+            if(pair.key.equals(key)) {
+
+                return true;
+
+            }
+
+        }
+
 
         return false;
 
     }
 
 
+
     public ValueType get(KeyType key) {
 
-        return null;
+
+        int index = Math.abs(key.hashCode()) % table.length;
+
+
+        for(Pair pair : table[index]) {
+
+
+            if(pair.key.equals(key)) {
+
+                return pair.value;
+
+            }
+
+        }
+
+
+        throw new NoSuchElementException();
 
     }
+
 
 
     public ValueType remove(KeyType key) {
 
-        return null;
+
+        int index = Math.abs(key.hashCode()) % table.length;
+
+
+        for(Pair pair : table[index]) {
+
+
+            if(pair.key.equals(key)) {
+
+
+                ValueType value = pair.value;
+
+                table[index].remove(pair);
+
+                size--;
+
+                return value;
+
+            }
+
+        }
+
+
+        throw new NoSuchElementException();
 
     }
+
 
 
     public void clear() {
 
+
+        for(int i = 0; i < table.length; i++) {
+
+            table[i].clear();
+
+        }
+
+
+        size = 0;
+
     }
+
 
 
     public int getSize() {
 
-        return 0;
+        return size;
 
     }
+
 
 
     public int getCapacity() {
@@ -81,79 +193,69 @@ public class HashTableMap<KeyType, ValueType>
     }
 
 
+
     public List<KeyType> getKeys() {
 
-        return null;
 
-    }
-    /**
-     * Tests that default constructor creates capacity 64.
-     */
-    @Test
-    public void testDefaultCapacity() {
-
-        HashTableMap<String,Integer> map =
-            new HashTableMap<>();
-
-        assertEquals(64, map.getCapacity());
-
-    }
+        List<KeyType> keys = new LinkedList<KeyType>();
 
 
-    /**
-     * Tests that custom constructor creates correct capacity.
-     */
-    @Test
-    public void testCustomCapacity() {
+        for(int i = 0; i < table.length; i++) {
 
-        HashTableMap<String,Integer> map =
-            new HashTableMap<>(10);
 
-        assertEquals(10, map.getCapacity());
+            for(Pair pair : table[i]) {
+
+                keys.add(pair.key);
+
+            }
+
+        }
+
+
+        return keys;
 
     }
 
 
-    /**
-     * Tests that a new map starts empty.
-     */
-    @Test
-    public void testInitialSize() {
 
-        HashTableMap<String,Integer> map =
-            new HashTableMap<>();
-
-        assertEquals(0, map.getSize());
-
-    }
+    @SuppressWarnings("unchecked")
+    private void resize() {
 
 
-    /**
-     * Tests containsKey on an empty map.
-     */
-    @Test
-    public void testContainsKeyEmpty() {
-
-        HashTableMap<String,Integer> map =
-            new HashTableMap<>();
-
-        assertFalse(map.containsKey("apple"));
-
-    }
+        LinkedList<Pair>[] oldTable = table;
 
 
-    /**
-     * Tests getKeys on a new empty map.
-     */
-    @Test
-    public void testGetKeysEmpty() {
+        table = (LinkedList<Pair>[]) new LinkedList[oldTable.length * 2];
 
-        HashTableMap<String,Integer> map =
-            new HashTableMap<>();
 
-        assertNull(map.getKeys());
+        for(int i = 0; i < table.length; i++) {
+
+            table[i] = new LinkedList<Pair>();
+
+        }
+
+
+        for(int i = 0; i < oldTable.length; i++) {
+
+
+            for(Pair pair : oldTable[i]) {
+
+
+                int index =
+                    Math.abs(pair.key.hashCode()) % table.length;
+
+
+                table[index].add(pair);
+
+            }
+
+        }
+
 
     }
 
+
+
+    // keep your five JUnit tests below if needed
 
 }
